@@ -1,0 +1,10 @@
+diff a/platformio.ini b/platformio.ini	(rejected hunks)
+@@ -12,7 +12,7 @@
+ default_envs =
+ 	;m5stack-cardputer
+ 	;m5stack-sticks3
+-	m5stack-cplus2
++	;m5stack-cplus2
+ 	;m5stack-cplus1_1
+ 	;LAUNCHER_m5stack-cplus1_1
+ 	;m5stack-core2

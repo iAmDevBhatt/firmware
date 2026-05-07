@@ -11,45 +11,46 @@ import gzip
 from os import makedirs, remove, rename
 from os.path import basename, dirname, exists, isfile, join
 
-Import("env")  # type: ignore
+Import("env")
 
 FRAMEWORK_DIR = env.PioPlatform().get_package_dir("framework-arduinoespressif32-libs")
 board_mcu = env.BoardConfig()
 mcu = board_mcu.get("build.mcu", "")
-patchflag_path = join(FRAMEWORK_DIR,mcu, "lib", ".patched")
 
-# patch file only if we didn't do it befored
-if not isfile(join(FRAMEWORK_DIR,mcu, "lib", ".patched")):
-    original_file = join(FRAMEWORK_DIR,mcu, "lib", "libnet80211.a")
-    patched_file = join(
-        FRAMEWORK_DIR, mcu, "lib", "libnet80211.a.patched"
-    )
+# Guard against missing framework
+if FRAMEWORK_DIR is None:
+    print("Framework not found, skipping patch.py")
+    Return()
 
-    if mcu=="esp32c5" or mcu=="esp32c6" :
+patchflag_path = join(FRAMEWORK_DIR, mcu, "lib", ".patched")
+
+# Only patch if not already patched
+if not isfile(patchflag_path):
+
+    if mcu in ["esp32c5", "esp32c6"]:
+        original_file = join(FRAMEWORK_DIR, mcu, "lib", "libnet80211.a")
+        patched_file = join(FRAMEWORK_DIR, mcu, "lib", "libnet80211.a.patched")
+
         env.Execute(
-            "pio pkg exec -p toolchain-riscv32-esp -- riscv32-esp-elf-objcopy  --weaken-symbol=ieee80211_raw_frame_sanity_check %s %s"
-            % (original_file, patched_file)
-        )
-    elif mcu=="esp32p4":
-        """Do nothing"""
-    else:
-        env.Execute(
-            "pio pkg exec -p toolchain-xtensa-%s -- xtensa-%s-elf-objcopy  --weaken-symbol=ieee80211_raw_frame_sanity_check %s %s"
-            % (mcu, mcu, original_file, patched_file)
+            "pio pkg exec -p toolchain-riscv32-esp -- riscv32-esp-elf-objcopy --weaken-symbol=ieee80211_raw_frame"
         )
 
-    if isfile("%s.old" % (original_file)):
-        remove("%s.old" % (original_file))
+        if isfile("%s.old" % (original_file)):
+            remove("%s.old" % (original_file))
+        if isfile(original_file):
+            rename(original_file, "%s.old" % (original_file))
+        else:
+            print("Patch: Original file not found")
+        if isfile(patched_file):
+            rename(patched_file, original_file)
+        else:
+            print("Patch: Patched file not found")
 
-    if isfile(original_file):
-        rename(original_file, "%s.old" % (original_file))
-    else:
-        print("Patch: Original file not found")
+    elif mcu in ["esp32p4", "esp32s3"]:
+        print("Skipping patch for", mcu)
 
-    if isfile(patched_file):
-        rename(patched_file, original_file)
     else:
-        print("Patch: Patched file not found")
+        print("No patch needed for", mcu)
 
 
     def _touch(path):

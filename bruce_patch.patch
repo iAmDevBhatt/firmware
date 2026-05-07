@@ -1,0 +1,580 @@
+diff --git a/boards/esp32s3_waveshare35/esp32s3_waveshare35.ini b/boards/esp32s3_waveshare35/esp32s3_waveshare35.ini
+new file mode 100644
+index 00000000..4a5a7f6b
+--- /dev/null
++++ b/boards/esp32s3_waveshare35/esp32s3_waveshare35.ini
+@@ -0,0 +1,123 @@
++; PlatformIO Project Configuration File
++;
++;   Build options: build flags, source filter
++;   Upload options: custom upload port, speed and extra flags
++;   Library options: dependencies, extra library storages
++;   Advanced options: extra scripting
++;
++; Please visit documentation for the other options and examples
++; https://docs.platformio.org/page/projectconf.html
++
++[env:esp32-s3-waveshare-psram]
++board = ESP-General
++board_build.partitions = custom_8Mb.csv
++board_build.arduino.memory_type = qio_opi  ; NEEDED FOR 8MB PSRAM (N16R8)
++board_build.psram = enabled
++build_src_filter =${env.build_src_filter} +<../boards/ESP-General>
++
++
++build_flags =
++	${env.build_flags}
++	-Iboards/ESP-General
++	-DUSB_as_HID=1
++	-DHAS_SCREEN=1
++	-DHAS_TOUCH=1
++    -DLV_CONF_INCLUDE_SIMPLE
++    -I .
++    -DROTATION=1
++    -DGFX_BL=6
++	; grove pins
++	; defaults from https://github.com/espressif/arduino-esp32/blob/master/variants/esp32s3/pins_arduino.h
++	-DGROVE_SDA=8  ; default RF TX pin
++	-DGROVE_SCL=46  ; default IR/RF RX pin
++	;-DALLOW_ALL_GPIO_FOR_IR_RF=1 ; Set this option to make use of all GPIOs, from 1 to 44 to be chosen, except TFT and SD pins
++
++	; ir led pin
++	-DIR_TX_PINS='{{"M5 IR Mod", GROVE_SDA}, {"Grove W", GROVE_SCL}, {"Grove Y", GROVE_SDA}}'
++	-DIR_RX_PINS='{{"M5 IR Mod", GROVE_SCL}, {"Grove W", GROVE_SCL}, {"Grove Y", GROVE_SDA}}'
++	-DTXLED=40
++	-DLED_ON=HIGH
++	-DLED_OFF=LOW
++
++	;Radio Frequency (one pin modules) pin setting
++	-DRF_TX_PINS='{{"M5 RF433T", GROVE_SDA}, {"Grove W", GROVE_SCL}, {"Grove Y", GROVE_SDA}}'
++	-DRF_RX_PINS='{{"M5 RF433R", GROVE_SCL}, {"Grove W", GROVE_SCL}, {"Grove Y", GROVE_SDA}}'
++
++	; sd card pins
++	; suggested https://github.com/espressif/esp-idf/tree/master/examples/storage/sd_card/sdmmc
++	-DSDCARD_CS=-1
++	-DSDCARD_SCK=-1
++	-DSDCARD_MISO=-1
++	-DSDCARD_MOSI=-1
++
++	; tft vars
++	-DROTATION=1
++	-DBACKLIGHT=-1  ; tft backlight pin
++	-DMINBRIGHT=160  ; unused?
++	-DSMOOTH_FONT=1
++	-DTFT_DISPON=0x29
++	-DTFT_DISPOFF=0x28
++	-DTFT_CS=-1
++	-DTFT_DC=-1
++	-DTFT_RST=-1
++	-DTOUCH_CS=-1
++	-DTFT_MOSI=-1
++	-DTFT_SCLK=-1
++	-DTFT_BL=-1
++	; text sizes
++	-DFP=1
++	-DFM=2
++	-DFG=3
++	; ui control buttons
++	;-DSEL_BTN=1
++	;-DUP_BTN=2  ; also work as ESC
++	;-DDW_BTN=3  ; also work as NEXT
++	-DBTN_ALIAS='"OK"'
++
++	;FM Radio
++	;-DFM_SI4713=1 ;Uncomment to activate FM Radio using Adafruit Si4713
++	-DFM_RSTPIN=12
++	;Microphone
++	;-DMIC_SPM1423=1 ; uncomment to enable Applicable for SPM1423 device
++	;-DPIN_CLK=-1
++	;-DI2S_SCLK_PIN=-1
++	;-DI2S_DATA_PIN=-1
++	;-DPIN_DATA=-1
++
++	;CC1101 SPI connection pins
++	; best connection pins for higher speed https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux
++	-DUSE_CC1101_VIA_SPI
++	-DCC1101_GDO0_PIN=9
++	-DCC1101_SS_PIN=10
++	-DCC1101_MOSI_PIN=11
++	-DCC1101_SCK_PIN=12
++	-DCC1101_MISO_PIN=13
++	;-DCC1101_GDO2_PIN=14  ; optional
++
++	; connections are the same as CC1101
++	;-DUSE_NRF24_VIA_SPI
++	;-DNRF24_CE_PIN=6
++	;-DNRF24_SS_PIN=7  ; chip select
++	;-DNRF24_MOSI_PIN=11
++	;-DNRF24_SCK_PIN=12
++	;-DNRF24_MISO_PIN=13
++
++	-DSPI_SCK_PIN=12
++	-DSPI_MOSI_PIN=11
++	-DSPI_MISO_PIN=13
++	-DSPI_SS_PIN=10
++
++	; connections are the same as W5500
++	; -DUSE_W5500_VIA_SPI
++	; -DW5500_SS_PIN=SPI_SS_PIN
++	; -DW5500_MOSI_PIN=SPI_MOSI_PIN
++	; -DW5500_SCK_PIN=SPI_SCK_PIN
++	; -DW5500_MISO_PIN=SPI_MISO_PIN
++	;-DW5500_INT_PIN=6
++	-DDEVICE_NAME='"ESP32-S3 DevkitC"'
++
++lib_deps =
++	${env.lib_deps}
++	https://github.com/moononournation/Arduino_GFX.git
++    lvgl/lvgl@^8.3.11
++    https://github.com/lewisxhe/SensorLib.git
+diff --git a/boards/esp32s3_waveshare35/interface.cpp b/boards/esp32s3_waveshare35/interface.cpp
+new file mode 100644
+index 00000000..57c1b0af
+--- /dev/null
++++ b/boards/esp32s3_waveshare35/interface.cpp
+@@ -0,0 +1,53 @@
++#include "core/powerSave.h"
++#include <interface.h>
++
++/***************************************************************************************
++** Function name: _setup_gpio()
++** Location: main.cpp
++** Description:   initial setup for the device
++***************************************************************************************/
++void _setup_gpio() {
++    // bruceConfig.startupApp = "WebUI";
++    pinMode(6, OUTPUT); // Backlight
++    digitalWrite(6, HIGH);
++}
++
++/***************************************************************************************
++** Function name: getBattery()
++** location: display.cpp
++** Description:   Delivers the battery value from 1-100
++***************************************************************************************/
++int getBattery() { return 0; }
++
++/***************************************************************************************
++** Function name: isCharging()
++** Description:   Default implementation that returns false
++***************************************************************************************/
++bool isCharging() { return false; }
++
++/*********************************************************************
++** Function: setBrightness
++** location: settings.cpp
++** set brightness value
++**********************************************************************/
++void _setBrightness(uint8_t brightval) {}
++
++/*********************************************************************
++** Function: InputHandler
++** Handles the variables PrevPress, NextPress, SelPress, AnyKeyPress and EscPress
++**********************************************************************/
++void InputHandler(void) {}
++
++/*********************************************************************
++** Function: powerOff
++** location: mykeyboard.cpp
++** Turns off the device (or try to)
++**********************************************************************/
++void powerOff() {}
++
++/*********************************************************************
++** Function: checkReboot
++** location: mykeyboard.cpp
++** Btn logic to turnoff the device (name is odd btw)
++**********************************************************************/
++void checkReboot() {}
+diff --git a/boards/esp32s3_waveshare35/pins_arduino.h b/boards/esp32s3_waveshare35/pins_arduino.h
+new file mode 100644
+index 00000000..b0961c0d
+--- /dev/null
++++ b/boards/esp32s3_waveshare35/pins_arduino.h
+@@ -0,0 +1,69 @@
++#ifndef Pins_Arduino_h
++#define Pins_Arduino_h
++
++#include <stdint.h>
++#include "soc/soc_caps.h"
++
++#define USB_VID 0x303a
++#define USB_PID 0x1001
++
++// Some boards have too low voltage on this pin (board design bug)
++// Use different pin with 3V and connect with 48
++// and change this setup for the chosen pin (for example 38)
++#define PIN_RGB_LED 48
++// BUILTIN_LED can be used in new Arduino API digitalWrite() like in Blink.ino
++static const uint8_t LED_BUILTIN = SOC_GPIO_PIN_COUNT + PIN_RGB_LED;
++#define BUILTIN_LED LED_BUILTIN  // backward compatibility
++#define LED_BUILTIN LED_BUILTIN  // allow testing #ifdef LED_BUILTIN
++// RGB_BUILTIN and RGB_BRIGHTNESS can be used in new Arduino API rgbLedWrite()
++#define RGB_BUILTIN    LED_BUILTIN
++#define RGB_BRIGHTNESS 64
++
++static const uint8_t TX = 43;
++static const uint8_t RX = 44;
++
++static const uint8_t SDA = 8;
++static const uint8_t SCL = 9;
++
++static const uint8_t SS = 10;
++static const uint8_t MOSI = 11;
++static const uint8_t MISO = 13;
++static const uint8_t SCK = 12;
++
++static const uint8_t A0 = 1;
++static const uint8_t A1 = 2;
++static const uint8_t A2 = 3;
++static const uint8_t A3 = 4;
++static const uint8_t A4 = 5;
++static const uint8_t A5 = 6;
++static const uint8_t A6 = 7;
++static const uint8_t A7 = 8;
++static const uint8_t A8 = 9;
++static const uint8_t A9 = 10;
++static const uint8_t A10 = 11;
++static const uint8_t A11 = 12;
++static const uint8_t A12 = 13;
++static const uint8_t A13 = 14;
++static const uint8_t A14 = 15;
++static const uint8_t A15 = 16;
++static const uint8_t A16 = 17;
++static const uint8_t A17 = 18;
++static const uint8_t A18 = 19;
++static const uint8_t A19 = 20;
++
++static const uint8_t T1 = 1;
++static const uint8_t T2 = 2;
++static const uint8_t T3 = 3;
++static const uint8_t T4 = 4;
++static const uint8_t T5 = 5;
++static const uint8_t T6 = 6;
++static const uint8_t T7 = 7;
++static const uint8_t T8 = 8;
++static const uint8_t T9 = 9;
++static const uint8_t T10 = 10;
++static const uint8_t T11 = 11;
++static const uint8_t T12 = 12;
++static const uint8_t T13 = 13;
++static const uint8_t T14 = 14;
++
++#endif /* Pins_Arduino_h */
+\ No newline at end of file
+diff --git a/lv_conf.h b/lv_conf.h
+new file mode 100644
+index 00000000..ba287181
+--- /dev/null
++++ b/lv_conf.h
+@@ -0,0 +1,41 @@
++#ifndef LV_CONF_H
++#define LV_CONF_H
++
++/*====================
++   LVGL Configuration
++ ====================*/
++
++/* Display resolution for ST7796 (3.5" panel) */
++#define LV_HOR_RES_MAX 480
++#define LV_VER_RES_MAX 320
++
++/* Color depth: 16-bit is best for ESP32-S3 */
++#define LV_COLOR_DEPTH 16
++
++/* Swap bytes if using RGB565 with certain drivers */
++#define LV_COLOR_16_SWAP 1
++
++/* Tick period (ms) */
++#define LV_TICK_CUSTOM 1
++#define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())
++
++/* Enable commonly used widgets */
++#define LV_USE_LABEL 1
++#define LV_USE_BTN 1
++#define LV_USE_IMG 1
++#define LV_USE_SLIDER 1
++#define LV_USE_SWITCH 1
++#define LV_USE_ARC 1
++
++/* Enable input devices (touch, encoder, etc.) */
++#define LV_USE_INDEV 1
++
++/* Logging (optional, can disable for performance) */
++#define LV_USE_LOG 1
++#define LV_LOG_LEVEL LV_LOG_LEVEL_WARN
++
++/* Memory settings */
++#define LV_MEM_SIZE (32U * 1024U) /* 32 KB for LVGL heap */
++#define LV_MEM_CUSTOM 0
++
++#endif /* LV_CONF_H */
+diff --git a/patch.py b/patch.py
+index 1dac1ede..64e5d4af 100644
+--- a/patch.py
++++ b/patch.py
+@@ -11,45 +11,46 @@ import gzip
+ from os import makedirs, remove, rename
+ from os.path import basename, dirname, exists, isfile, join
+ 
+-Import("env")  # type: ignore
++Import("env")
+ 
+ FRAMEWORK_DIR = env.PioPlatform().get_package_dir("framework-arduinoespressif32-libs")
+ board_mcu = env.BoardConfig()
+ mcu = board_mcu.get("build.mcu", "")
+-patchflag_path = join(FRAMEWORK_DIR,mcu, "lib", ".patched")
+ 
+-# patch file only if we didn't do it befored
+-if not isfile(join(FRAMEWORK_DIR,mcu, "lib", ".patched")):
+-    original_file = join(FRAMEWORK_DIR,mcu, "lib", "libnet80211.a")
+-    patched_file = join(
+-        FRAMEWORK_DIR, mcu, "lib", "libnet80211.a.patched"
+-    )
++# Guard against missing framework
++if FRAMEWORK_DIR is None:
++    print("Framework not found, skipping patch.py")
++    Return()
++
++patchflag_path = join(FRAMEWORK_DIR, mcu, "lib", ".patched")
++
++# Only patch if not already patched
++if not isfile(patchflag_path):
++
++    if mcu in ["esp32c5", "esp32c6"]:
++        original_file = join(FRAMEWORK_DIR, mcu, "lib", "libnet80211.a")
++        patched_file = join(FRAMEWORK_DIR, mcu, "lib", "libnet80211.a.patched")
+ 
+-    if mcu=="esp32c5" or mcu=="esp32c6" :
+-        env.Execute(
+-            "pio pkg exec -p toolchain-riscv32-esp -- riscv32-esp-elf-objcopy  --weaken-symbol=ieee80211_raw_frame_sanity_check %s %s"
+-            % (original_file, patched_file)
+-        )
+-    elif mcu=="esp32p4":
+-        """Do nothing"""
+-    else:
+         env.Execute(
+-            "pio pkg exec -p toolchain-xtensa-%s -- xtensa-%s-elf-objcopy  --weaken-symbol=ieee80211_raw_frame_sanity_check %s %s"
+-            % (mcu, mcu, original_file, patched_file)
++            "pio pkg exec -p toolchain-riscv32-esp -- riscv32-esp-elf-objcopy --weaken-symbol=ieee80211_raw_frame"
+         )
+ 
+-    if isfile("%s.old" % (original_file)):
+-        remove("%s.old" % (original_file))
++        if isfile("%s.old" % (original_file)):
++            remove("%s.old" % (original_file))
++        if isfile(original_file):
++            rename(original_file, "%s.old" % (original_file))
++        else:
++            print("Patch: Original file not found")
++        if isfile(patched_file):
++            rename(patched_file, original_file)
++        else:
++            print("Patch: Patched file not found")
+ 
+-    if isfile(original_file):
+-        rename(original_file, "%s.old" % (original_file))
+-    else:
+-        print("Patch: Original file not found")
++    elif mcu in ["esp32p4", "esp32s3"]:
++        print("Skipping patch for", mcu)
+ 
+-    if isfile(patched_file):
+-        rename(patched_file, original_file)
+     else:
+-        print("Patch: Patched file not found")
++        print("No patch needed for", mcu)
+ 
+ 
+     def _touch(path):
+diff --git a/platformio.ini b/platformio.ini
+index 0ae3c1bb..91ce9dc1 100644
+--- a/platformio.ini
++++ b/platformio.ini
+@@ -12,7 +12,7 @@
+ default_envs =
+ 	;m5stack-cardputer
+ 	;m5stack-sticks3
+-	m5stack-cplus2
++	;m5stack-cplus2
+ 	;m5stack-cplus1_1
+ 	;LAUNCHER_m5stack-cplus1_1
+ 	;m5stack-core2
+@@ -155,6 +155,8 @@ extra_scripts =
+ 
+ lib_deps =
+ 	https://github.com/sayacom/WireGuard-ESP32-Arduino#feature/esp-netif
++	https://github.com/moononournation/Arduino_GFX.git
++	lvgl/lvgl@^8.3.11
+ 	;WireGuard-ESP32
+ 	https://github.com/bmorcelli/IRremoteESP8266
+ 	;IRremoteESP8266
+diff --git a/src/lv_conf.h b/src/lv_conf.h
+new file mode 100644
+index 00000000..ba287181
+--- /dev/null
++++ b/src/lv_conf.h
+@@ -0,0 +1,41 @@
++#ifndef LV_CONF_H
++#define LV_CONF_H
++
++/*====================
++   LVGL Configuration
++ ====================*/
++
++/* Display resolution for ST7796 (3.5" panel) */
++#define LV_HOR_RES_MAX 480
++#define LV_VER_RES_MAX 320
++
++/* Color depth: 16-bit is best for ESP32-S3 */
++#define LV_COLOR_DEPTH 16
++
++/* Swap bytes if using RGB565 with certain drivers */
++#define LV_COLOR_16_SWAP 1
++
++/* Tick period (ms) */
++#define LV_TICK_CUSTOM 1
++#define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())
++
++/* Enable commonly used widgets */
++#define LV_USE_LABEL 1
++#define LV_USE_BTN 1
++#define LV_USE_IMG 1
++#define LV_USE_SLIDER 1
++#define LV_USE_SWITCH 1
++#define LV_USE_ARC 1
++
++/* Enable input devices (touch, encoder, etc.) */
++#define LV_USE_INDEV 1
++
++/* Logging (optional, can disable for performance) */
++#define LV_USE_LOG 1
++#define LV_LOG_LEVEL LV_LOG_LEVEL_WARN
++
++/* Memory settings */
++#define LV_MEM_SIZE (32U * 1024U) /* 32 KB for LVGL heap */
++#define LV_MEM_CUSTOM 0
++
++#endif /* LV_CONF_H */
+diff --git a/src/main.cpp b/src/main.cpp
+index 32373774..4e2b8102 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -8,9 +8,12 @@
+ #include "esp32-hal-psram.h"
+ #include "esp_task_wdt.h"
+ #include "esp_wifi.h"
++#include <Arduino_GFX_Library.h>
+ #include <functional>
++#include <lvgl.h>
+ #include <string>
+ #include <vector>
++
+ io_expander ioExpander;
+ BruceConfig bruceConfig;
+ BruceConfigPins bruceConfigPins;
+@@ -48,6 +51,8 @@ volatile bool SerialCmdPress = false;
+ volatile int forceMenuOption = -1;
+ volatile uint8_t menuOptionType = 0;
+ String menuOptionLabel = "";
++lv_obj_t *helloLabel;
++
+ #ifdef HAS_ENCODER_LED
+ volatile int EncoderLedChange = 0;
+ #endif
+@@ -222,6 +227,9 @@ void begin_tft() {
+ #endif
+     resetTftDisplay();
+     setBrightness(bruceConfig.bright, false);
++
++    tft.begin();
++    tft.fillScreen(0xFFFF);
+ }
+ 
+ /*********************************************************************
+@@ -407,6 +415,19 @@ void startup_sound() {
+ #endif
+ }
+ 
++void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
++    // Example using Arduino_GFX or Bruce’s tft object
++    int32_t w = (area->x2 - area->x1 + 1);
++    int32_t h = (area->y2 - area->y1 + 1);
++    Serial.println("LVGL flush called");
++
++    // Push LVGL’s buffer to the ST7796 via Bruce’s tft driver
++    tft.pushImage(area->x1, area->y1, w, h, (uint16_t *)&color_p->full);
++
++    // Tell LVGL we’re done
++    lv_disp_flush_ready(disp);
++}
++
+ /*********************************************************************
+  **  Function: setup
+  **  Where the devices are started and variables set
+@@ -434,12 +455,32 @@ void setup() {
+     bruceConfigPins.rotation = ROTATION;
+     setup_gpio();
+ #if defined(HAS_SCREEN)
+-    tft.init();
++    tft.begin();
++    pinMode(GFX_BL, OUTPUT);
++    digitalWrite(GFX_BL, HIGH); // turn backlight on
+     tft.setRotation(bruceConfigPins.rotation);
+     tft.fillScreen(TFT_BLACK);
+     // bruceConfig is not read yet.. just to show something on screen due to long boot time
+     tft.setTextColor(TFT_PURPLE, TFT_BLACK);
+     tft.drawCentreString("Booting", tft.width() / 2, tft.height() / 2, 1);
++    lv_init();
++    // Register display driver (reuse your flush callback)
++    static lv_disp_draw_buf_t draw_buf;
++    static lv_color_t buf1[LV_HOR_RES_MAX * 40];
++    lv_disp_draw_buf_init(&draw_buf, buf1, NULL, LV_HOR_RES_MAX * 40);
++
++    static lv_disp_drv_t disp_drv;
++    lv_disp_drv_init(&disp_drv);
++    disp_drv.hor_res = LV_HOR_RES_MAX;
++    disp_drv.ver_res = LV_VER_RES_MAX;
++    disp_drv.flush_cb = my_disp_flush; // you’ll need to define this flush callback
++    disp_drv.draw_buf = &draw_buf;
++    lv_disp_drv_register(&disp_drv);
++
++    // Create Hello World label
++    lv_obj_t *label = lv_label_create(lv_scr_act());
++    lv_label_set_text(label, "Hello World!");
++    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+ #else
+     tft.begin();
+ #endif
+@@ -528,6 +569,8 @@ void loop() {
+     }
+ #endif
+     tft.fillScreen(bruceConfig.bgColor);
++    lv_timer_handler();
++    delay(5);
+ 
+     mainMenu.begin();
+     delay(1);
+@@ -535,6 +578,9 @@ void loop() {
+ #else
+ 
+ void loop() {
++    lv_timer_handler(); // keep LVGL alive
++    delay(5);
++
+     tft.setLogging();
+     Serial.println(
+         "\n"
+diff --git a/src/modules/wifi/wifi_atks.cpp b/src/modules/wifi/wifi_atks.cpp
+index 25643bbf..7dda7ea2 100644
+--- a/src/modules/wifi/wifi_atks.cpp
++++ b/src/modules/wifi/wifi_atks.cpp
+@@ -35,7 +35,7 @@ std::vector<wifi_ap_record_t> ap_records;
+  * @attention This function is not meant to be called!
+  * @see Project with original idea/implementation https://github.com/GANESH-ICMC/esp32-deauther
+  */
+-extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
++static int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
+     if (arg == 31337) return 1;
+     else return 0;
+ }

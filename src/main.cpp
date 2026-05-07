@@ -8,9 +8,12 @@
 #include "esp32-hal-psram.h"
 #include "esp_task_wdt.h"
 #include "esp_wifi.h"
+#include <Arduino_GFX_Library.h>
 #include <functional>
+#include <lvgl.h>
 #include <string>
 #include <vector>
+
 io_expander ioExpander;
 BruceConfig bruceConfig;
 BruceConfigPins bruceConfigPins;
@@ -48,6 +51,8 @@ volatile bool SerialCmdPress = false;
 volatile int forceMenuOption = -1;
 volatile uint8_t menuOptionType = 0;
 String menuOptionLabel = "";
+lv_obj_t *helloLabel;
+
 #ifdef HAS_ENCODER_LED
 volatile int EncoderLedChange = 0;
 #endif
@@ -222,6 +227,9 @@ void begin_tft() {
 #endif
     resetTftDisplay();
     setBrightness(bruceConfig.bright, false);
+
+    tft.begin();
+    tft.fillScreen(0xFFFF);
 }
 
 /*********************************************************************
@@ -407,6 +415,19 @@ void startup_sound() {
 #endif
 }
 
+void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
+    // Example using Arduino_GFX or Bruce’s tft object
+    int32_t w = (area->x2 - area->x1 + 1);
+    int32_t h = (area->y2 - area->y1 + 1);
+    Serial.println("LVGL flush called");
+
+    // Push LVGL’s buffer to the ST7796 via Bruce’s tft driver
+    tft.pushImage(area->x1, area->y1, w, h, (uint16_t *)&color_p->full);
+
+    // Tell LVGL we’re done
+    lv_disp_flush_ready(disp);
+}
+
 /*********************************************************************
  **  Function: setup
  **  Where the devices are started and variables set
@@ -434,12 +455,32 @@ void setup() {
     bruceConfigPins.rotation = ROTATION;
     setup_gpio();
 #if defined(HAS_SCREEN)
-    tft.init();
+    tft.begin();
+    pinMode(GFX_BL, OUTPUT);
+    digitalWrite(GFX_BL, HIGH); // turn backlight on
     tft.setRotation(bruceConfigPins.rotation);
     tft.fillScreen(TFT_BLACK);
     // bruceConfig is not read yet.. just to show something on screen due to long boot time
     tft.setTextColor(TFT_PURPLE, TFT_BLACK);
     tft.drawCentreString("Booting", tft.width() / 2, tft.height() / 2, 1);
+    lv_init();
+    // Register display driver (reuse your flush callback)
+    static lv_disp_draw_buf_t draw_buf;
+    static lv_color_t buf1[LV_HOR_RES_MAX * 40];
+    lv_disp_draw_buf_init(&draw_buf, buf1, NULL, LV_HOR_RES_MAX * 40);
+
+    static lv_disp_drv_t disp_drv;
+    lv_disp_drv_init(&disp_drv);
+    disp_drv.hor_res = LV_HOR_RES_MAX;
+    disp_drv.ver_res = LV_VER_RES_MAX;
+    disp_drv.flush_cb = my_disp_flush; // you’ll need to define this flush callback
+    disp_drv.draw_buf = &draw_buf;
+    lv_disp_drv_register(&disp_drv);
+
+    // Create Hello World label
+    lv_obj_t *label = lv_label_create(lv_scr_act());
+    lv_label_set_text(label, "Hello World!");
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 #else
     tft.begin();
 #endif
@@ -531,6 +572,8 @@ void loop() {
     }
 #endif
     tft.fillScreen(bruceConfig.bgColor);
+    lv_timer_handler();
+    delay(5);
 
     mainMenu.begin();
     delay(1);
@@ -538,6 +581,9 @@ void loop() {
 #else
 
 void loop() {
+    lv_timer_handler(); // keep LVGL alive
+    delay(5);
+
     tft.setLogging();
     Serial.println(
         "\n"

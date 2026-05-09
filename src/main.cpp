@@ -8,7 +8,7 @@
 #include "esp32-hal-psram.h"
 #include "esp_task_wdt.h"
 #include "esp_wifi.h"
-#include <Arduino_GFX_Library.h>
+// #include <Arduino_GFX_Library.h>
 #include <functional>
 #include <lvgl.h>
 #include <string>
@@ -420,7 +420,7 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
     int32_t w = (area->x2 - area->x1 + 1);
     int32_t h = (area->y2 - area->y1 + 1);
     Serial.println("LVGL flush called");
-
+    Serial.println("Hello from ESP32-S3sss!");
     // Push LVGL’s buffer to the ST7796 via Bruce’s tft driver
     tft.pushImage(area->x1, area->y1, w, h, (uint16_t *)&color_p->full);
 
@@ -428,16 +428,80 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
     lv_disp_flush_ready(disp);
 }
 
+/* void setup() {
+    setup_gpio();
+    Serial.begin(115200);
+    Serial.println("Hello from ESP32-S3!");
+    TFT_eSPI tftt = TFT_eSPI();
+    delay(500);
+    // Initialize TFT
+    tftt.init();
+    tftt.setRotation(1);        // Adjust rotation as needed
+    tftt.fillScreen(TFT_BLACK); // Clear screen
+    Serial.println("Setup:Hello from ESP32-S3e!");
+    // Turn on backlight (if wired to a GPIO)
+    pinMode(6, OUTPUT); // GPIO5 = LCD BL on Waveshare board
+    digitalWrite(6, HIGH);
+
+    // Draw "Hi" in the center
+    tftt.setTextColor(TFT_WHITE, TFT_BLACK);
+    tftt.setTextSize(3);
+    tftt.drawCentreString("Hi", tft.width() / 2, tft.height() / 2, 1);
+    Serial.println("Setup:Hello from ESP32-sS3_2nd!");
+    /* setup_gpio();
+    // Initialize serial for debug
+    Serial.begin(115200);
+    Serial.println("Starting TFT test...");
+    TFT_eSPI tftt = TFT_eSPI();
+
+    // Initialize TFT
+    tftt.init();
+    tftt.setRotation(1);        // Adjust rotation as needed
+    tftt.fillScreen(TFT_BLACK); // Clear screen
+
+    // Turn on backlight (if wired to a GPIO)
+    pinMode(5, OUTPUT); // GPIO5 = LCD BL on Waveshare board
+    digitalWrite(5, HIGH);
+
+    // Draw "Hi" in the center
+    tftt.setTextColor(TFT_WHITE, TFT_BLACK);
+    tftt.setTextSize(3);
+    tftt.drawCentreString("Hi", tft.width() / 2, tft.height() / 2, 1);
+}*/
+
+/*void loop() {
+    Serial.begin(115200);
+    Serial.println("loop:Hello from ESP32-S3!");
+    TFT_eSPI tftt = TFT_eSPI();
+    delay(500);
+    // Initialize TFT
+    tftt.init();
+    tftt.setRotation(1);       // Adjust rotation as needed
+    tftt.fillScreen(TFT_BLUE); // Clear screen
+    Serial.println("loop:Hello from ESP32-S3e!m1");
+    // Turn on backlight (if wired to a GPIO)
+    pinMode(5, OUTPUT); // GPIO5 = LCD BL on Waveshare board
+    digitalWrite(5, HIGH);
+
+    // Draw "Hi" in the center
+    tftt.setTextColor(TFT_WHITE, TFT_BLACK);
+    tftt.setTextSize(3);
+    tftt.drawCentreString("Hi", TFT_WIDTH, TFT_HEIGHT, 1);
+    Serial.println("loop:Hello from ESP32-sS3!m2");
+    digitalWrite(5, LOW);
+    // put your main code here, to run repeatedly:
+}
+ */
 /*********************************************************************
- **  Function: setup
- **  Where the devices are started and variables set
- *********************************************************************/
+**  Function: setup
+**  Where the devices are started and variables set
+*********************************************************************/
 void setup() {
     Serial.setRxBufferSize(
         SAFE_STACK_BUFFER_SIZE / 4
     ); // Must be invoked before Serial.begin(). Default is 256 chars
     Serial.begin(115200);
-
+    Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
     log_d("Total heap: %d", ESP.getHeapSize());
     log_d("Free heap: %d", ESP.getFreeHeap());
     if (psramInit()) log_d("PSRAM Started");
@@ -455,11 +519,17 @@ void setup() {
     bruceConfigPins.rotation = ROTATION;
     setup_gpio();
 #if defined(HAS_SCREEN)
+    Serial.printf("After has");
     tft.begin();
     pinMode(GFX_BL, OUTPUT);
     digitalWrite(GFX_BL, HIGH); // turn backlight on
     tft.setRotation(bruceConfigPins.rotation);
     tft.fillScreen(TFT_BLACK);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setTextSize(3);
+    tft.setCursor(50, 50);
+    tft.print("Hi");
+    delay(2000);
     // bruceConfig is not read yet.. just to show something on screen due to long boot time
     tft.setTextColor(TFT_PURPLE, TFT_BLACK);
     tft.drawCentreString("Booting", tft.width() / 2, tft.height() / 2, 1);
@@ -522,8 +592,9 @@ void setup() {
         2,                             // Task priority (0 to 3), loopTask has priority 2.
         &xHandle                       // Task handle (not used)
     );
-    // #endif
+// #endif
 #if defined(HAS_SCREEN)
+    Serial.printf("After has 2");
     bruceConfig.openThemeFile(bruceConfig.themeFS(), bruceConfig.themePath, false);
     if (!bruceConfig.instantBoot) {
         boot_screen_anim();
@@ -556,8 +627,10 @@ void setup() {
  **********************************************************************/
 #if defined(HAS_SCREEN)
 void loop() {
+    Serial.printf("After has 22");
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
     if (interpreter_state > 0) {
+        Serial.printf("After has 23");
         vTaskDelay(pdMS_TO_TICKS(10));
         interpreter_state = 2;
         Serial.println("Entering interpreter...");
@@ -574,7 +647,7 @@ void loop() {
     tft.fillScreen(bruceConfig.bgColor);
     lv_timer_handler();
     delay(5);
-
+    Serial.printf("Main menu");
     mainMenu.begin();
     delay(1);
 }

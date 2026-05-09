@@ -1,53 +1,124 @@
 #include "core/powerSave.h"
+#include "core/utils.h"
+#include <Wire.h>
 #include <interface.h>
+
+/* #include <TouchDrv.hpp>
+TouchDrvFT6X36 touch; */
 
 /***************************************************************************************
 ** Function name: _setup_gpio()
-** Location: main.cpp
 ** Description:   initial setup for the device
 ***************************************************************************************/
 void _setup_gpio() {
-    // bruceConfig.startupApp = "WebUI";
-    pinMode(6, OUTPUT); // Backlight
-    digitalWrite(6, HIGH);
+    // Backlight pin
+    pinMode(5, OUTPUT); // GPIO5 = LCD BL
+    digitalWrite(5, HIGH);
+
+    // Reset pin
+    pinMode(0, OUTPUT); // GPIO0 = LCD RST (EIO0)
+    digitalWrite(0, HIGH);
+
+    // Touch controller init (FT6336 on I2C)
+    Wire.begin(9, 8); // SDA=9, SCL=8
+    delay(10);
+    /*   touch.begin(Wire, FT6X36_SLAVE_ADDRESS, 9, 8);
+      touch.interruptPolling(); */
+}
+
+/***************************************************************************************
+** Function name: _post_setup_gpio()
+** Description:   second stage gpio setup (PWM backlight)
+***************************************************************************************/
+void _post_setup_gpio() {
+    pinMode(TFT_BL, OUTPUT);     // Full brightness at startup
+    digitalWrite(TFT_BL, HIGH);  // Backlight pin on channel 0
+    ledcAttach(TFT_BL, 5000, 8); // 5kHz, 8-bit resolution
+    ledcWrite(TFT_BL, 255);
 }
 
 /***************************************************************************************
 ** Function name: getBattery()
-** location: display.cpp
-** Description:   Delivers the battery value from 1-100
+** Description:   No battery monitoring on Waveshare board
 ***************************************************************************************/
 int getBattery() { return 0; }
 
 /***************************************************************************************
 ** Function name: isCharging()
-** Description:   Default implementation that returns false
+** Description:   No charging detection
 ***************************************************************************************/
 bool isCharging() { return false; }
 
 /*********************************************************************
 ** Function: setBrightness
-** location: settings.cpp
-** set brightness value
+** Description:   Set brightness value (0–100%)
 **********************************************************************/
-void _setBrightness(uint8_t brightval) {}
+void _setBrightness(uint8_t brightval) {
+    int dutyCycle = (brightval * 255) / 100;
+    ledcWrite(0, dutyCycle);
+}
 
+bool getTouched() { return digitalRead(16) == LOW; }
+struct TP {
+    int16_t x[1], y[1];
+};
 /*********************************************************************
 ** Function: InputHandler
 ** Handles the variables PrevPress, NextPress, SelPress, AnyKeyPress and EscPress
 **********************************************************************/
-void InputHandler(void) {}
+void InputHandler(void) {
+    /*  TP t;
+     static unsigned long tm = 0;
+     if (millis() - tm > 200 || LongPress) {
+         // I know R3CK.. I Should NOT nest if statements..
+         // but it is needed to not keep SPI bus used without need, it save resources
+         if (getTouched()) {
+             touch.getPoint(t.x, t.y, 1);
+             // Serial.printf("\nRAW: Touch Pressed on x=%d, y=%d",t.x, t.y);
+             if (bruceConfigPins.rotation == 3) {
+                 t.y[0] = (tftHeight + 20) - t.y[0];
+                 t.x[0] = t.x[0];
+             }
+             if (bruceConfigPins.rotation == 0) {
+                 int tmp = t.x[0];
+                 t.x[0] = tftWidth - t.y[0];
+                 t.y[0] = tftHeight - tmp;
+             }
+             if (bruceConfigPins.rotation == 2) {
+                 int tmp = t.x[0];
+                 t.x[0] = t.y[0];
+                 t.y[0] = tmp;
+             }
+             if (bruceConfigPins.rotation == 1) { t.x[0] = tftWidth - t.x[0]; }
+             // Serial.printf("\nROT: Touch Pressed on x=%d, y=%d\n",t.x[0], t.y[0]);
 
+             if (!wakeUpScreen()) AnyKeyPress = true;
+             else return;
+
+             // Touch point global variable
+             touchPoint.x = t.x[0];
+             touchPoint.y = t.y[0];
+             touchPoint.pressed = true;
+             touchHeatMap(touchPoint);
+
+             tm = millis();
+         }
+     } */
+}
 /*********************************************************************
 ** Function: powerOff
-** location: mykeyboard.cpp
-** Turns off the device (or try to)
+** Turns off the device (backlight + deep sleep)
 **********************************************************************/
-void powerOff() {}
+void powerOff() {
+    digitalWrite(5, LOW); // Backlight off
+    esp_deep_sleep_start();
+}
 
 /*********************************************************************
 ** Function: checkReboot
-** location: mykeyboard.cpp
-** Btn logic to turnoff the device (name is odd btw)
+** Btn logic to reboot device
 **********************************************************************/
-void checkReboot() {}
+void checkReboot() {
+    // Optional: add button/touch long press detection
+    // esp_restart();
+}

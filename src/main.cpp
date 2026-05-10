@@ -8,11 +8,12 @@
 #include "esp32-hal-psram.h"
 #include "esp_task_wdt.h"
 #include "esp_wifi.h"
-// #include <Arduino_GFX_Library.h>
+#include <Arduino_GFX_Library.h>
 #include <functional>
 #include <lvgl.h>
 #include <string>
 #include <vector>
+#include "TCA9554.h"
 
 io_expander ioExpander;
 BruceConfig bruceConfig;
@@ -427,75 +428,51 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
     // Tell LVGL we’re done
     lv_disp_flush_ready(disp);
 }
-
-/* void setup() {
-    setup_gpio();
-    Serial.begin(115200);
-    Serial.println("Hello from ESP32-S3!");
-    TFT_eSPI tftt = TFT_eSPI();
-    delay(500);
-    // Initialize TFT
-    tftt.init();
-    tftt.setRotation(1);        // Adjust rotation as needed
-    tftt.fillScreen(TFT_BLACK); // Clear screen
-    Serial.println("Setup:Hello from ESP32-S3e!");
-    // Turn on backlight (if wired to a GPIO)
-    pinMode(6, OUTPUT); // GPIO5 = LCD BL on Waveshare board
-    digitalWrite(6, HIGH);
-
-    // Draw "Hi" in the center
-    tftt.setTextColor(TFT_WHITE, TFT_BLACK);
-    tftt.setTextSize(3);
-    tftt.drawCentreString("Hi", tft.width() / 2, tft.height() / 2, 1);
-    Serial.println("Setup:Hello from ESP32-sS3_2nd!");
-    /* setup_gpio();
-    // Initialize serial for debug
-    Serial.begin(115200);
-    Serial.println("Starting TFT test...");
-    TFT_eSPI tftt = TFT_eSPI();
-
-    // Initialize TFT
-    tftt.init();
-    tftt.setRotation(1);        // Adjust rotation as needed
-    tftt.fillScreen(TFT_BLACK); // Clear screen
-
-    // Turn on backlight (if wired to a GPIO)
-    pinMode(5, OUTPUT); // GPIO5 = LCD BL on Waveshare board
-    digitalWrite(5, HIGH);
-
-    // Draw "Hi" in the center
-    tftt.setTextColor(TFT_WHITE, TFT_BLACK);
-    tftt.setTextSize(3);
-    tftt.drawCentreString("Hi", tft.width() / 2, tft.height() / 2, 1);
-}*/
-
-/*void loop() {
-    Serial.begin(115200);
-    Serial.println("loop:Hello from ESP32-S3!");
-    TFT_eSPI tftt = TFT_eSPI();
-    delay(500);
-    // Initialize TFT
-    tftt.init();
-    tftt.setRotation(1);       // Adjust rotation as needed
-    tftt.fillScreen(TFT_BLUE); // Clear screen
-    Serial.println("loop:Hello from ESP32-S3e!m1");
-    // Turn on backlight (if wired to a GPIO)
-    pinMode(5, OUTPUT); // GPIO5 = LCD BL on Waveshare board
-    digitalWrite(5, HIGH);
-
-    // Draw "Hi" in the center
-    tftt.setTextColor(TFT_WHITE, TFT_BLACK);
-    tftt.setTextSize(3);
-    tftt.drawCentreString("Hi", TFT_WIDTH, TFT_HEIGHT, 1);
-    Serial.println("loop:Hello from ESP32-sS3!m2");
-    digitalWrite(5, LOW);
-    // put your main code here, to run repeatedly:
-}
- */
 /*********************************************************************
 **  Function: setup
 **  Where the devices are started and variables set
 *********************************************************************/
+#if defined(WAVESHARE_35B)
+void setup() {
+    Arduino_DataBus *bus =
+        new Arduino_ESP32QSPI(LCD_QSPI_CS, LCD_QSPI_CLK, LCD_QSPI_D0, LCD_QSPI_D1, LCD_QSPI_D2, LCD_QSPI_D3);
+    Arduino_GFX *g = new Arduino_AXS15231B(bus, -1 /* RST */, 0 /* rotation */, false, 320, 480);
+    Arduino_Canvas *gfx = new Arduino_Canvas(320, 480, g, 0, 0, ROTATION);
+    Wire.begin(21, 22);
+    TCA.begin();
+    TCA.pinMode1(1, OUTPUT);
+    TCA.write1(1, 1);
+    delay(10);
+    TCA.write1(1, 0);
+    delay(10);
+    TCA.write1(1, 1);
+    delay(200);
+
+    Serial.begin(115200);
+
+    if (!gfx->begin()) { Serial.println("gfx->begin() failed!"); }
+    gfx->fillScreen(RGB565_BLACK);
+
+    pinMode(GFX_BL, OUTPUT);
+    digitalWrite(GFX_BL, HIGH);
+
+    // Center text
+    gfx->setTextColor(RGB565_RED);
+    gfx->setTextSize(2); // adjust size as needed
+
+    const char *msg = "Sonal mere jaan";
+    int16_t x, y;
+    uint16_t w, h;
+    gfx->getTextBounds(msg, 0, 0, &x, &y, &w, &h);
+
+    int16_t cx = (gfx->width() - w) / 2;
+    int16_t cy = (gfx->height() - h) / 2;
+
+    gfx->setCursor(cx, cy);
+    gfx->println(msg);
+    gfx->flush();
+}
+#else
 void setup() {
     Serial.setRxBufferSize(
         SAFE_STACK_BUFFER_SIZE / 4
@@ -620,7 +597,7 @@ void setup() {
         bruceConfig.setStartupApp("");
     }
 }
-
+#endif
 /**********************************************************************
  **  Function: loop
  **  Main loop
@@ -651,8 +628,9 @@ void loop() {
     mainMenu.begin();
     delay(1);
 }
+#elif defined(WAVESHARE_35B)
+void loop() {}
 #else
-
 void loop() {
     lv_timer_handler(); // keep LVGL alive
     delay(5);

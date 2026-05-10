@@ -63,69 +63,24 @@
 // The XPT2046 requires a lower SPI clock rate of 2.5MHz so we define that here:
 #define SPI_TOUCH_FREQUENCY 2500000
 
-/* // I2C defaults (FT6336 touch controller)
-#define SDA 8
-#define SCL 7
-#define GROVE_SDA SDA
-#define GROVE_SCL SCL
+#define LCD_QSPI_CS 12
+#define LCD_QSPI_CLK 5
+#define LCD_QSPI_D0 1
+#define LCD_QSPI_D1 2
+#define LCD_QSPI_D2 3
+#define LCD_QSPI_D3 4
 
-// SPI defaults (ST7796 LCD)
-#define MISO -1 // not used
-#define MOSI 0
-#define SCK 4
-#define SS 15 // Chip select
+#define ROTATION 0
 
-// --- Main SPI Bus (ST7796 LCD) ---
-#define SPI_SS_PIN 15  // LCD CS
-#define SPI_MOSI_PIN 1 // LCD MOSI
-#define SPI_MISO_PIN 2 // LCD MISO (not used by ST7796)
-#define SPI_SCK_PIN 5  // LCD SCLK
-
-// LCD control pins
-#define LCD_DC 3  // Data/Command
-#define LCD_RST 0 // Reset (EIO0)
-#define LCD_BL 6  // Backlight
-#define GFX_BL LCD_BL
-
-// --- Touch (FT6336 via I2C) ---
-#define TOUCH_SDA 8 // TP SDA
-#define TOUCH_SCL 7 // TP SCL
-#define TOUCH_INT 1 // TP INT (EIO1)
-
-// --- SD Card (if used) ---
-#define SDCARD_CS 43 // Example mapping (check schematic)
-#define SDCARD_SCK 11
-#define SDCARD_MISO 9
-#define SDCARD_MOSI 10
-
-// --- Serial ---
-#define SERIAL_TX 43
-#define SERIAL_RX 44
-
-// --- Display Setup ---
-#define ST7796_DRIVER 1
-#define TFT_WIDTH 320
-#define TFT_HEIGHT 480
-#define TFT_CS SPI_SS_PIN
-#define TFT_DC LCD_DC
-#define TFT_RST LCD_RST
-#define TFT_BL LCD_BL
-#define TFT_BRIGHT_FREQ 5000
-#define TFT_BRIGHT_Bits 8
-#define TFT_MISO SPI_MISO_PIN
-#define TFT_MOSI SPI_MOSI_PIN
-#define TFT_SCLK SPI_SCK_PIN
-#define TFT_BACKLIGHT_ON HIGH
-#define TFT_BRIGHT_CHANNEL 0
-
-// --- LVGL integration ---
-#define MINBRIGHT (uint8_t)1
-
-#define SMOOTH_FONT 1
-#define TOUCH_CS -1
-
-// Identical looking TFT displays may have a different colour ordering in the 16-bit colour
-#define TFT_BGR 0 // Colour order Blue-Green-Red
-#define TFT_RGB 1 // Colour order Red-Green-Blue */
+#define TFT_SWRST -1
+#define TFT_INIT_DELAY -1
+#define TFT_CASET -1
+#define TFT_WRITE_BITS -1
+#define TFT_PASET -1
+#define TFT_RAMWR -1
+#define TFT_RAMRD -1
+// #define ROTATION 1
+// #define ROTATION 2
+// #define ROTATION 3
 
 #endif /* Pins_Arduino_h */

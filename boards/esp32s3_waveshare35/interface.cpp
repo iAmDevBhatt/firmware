@@ -11,19 +11,7 @@ TouchDrvFT6X36 touch; */
 ** Description:   initial setup for the device
 ***************************************************************************************/
 void _setup_gpio() {
-    // Backlight pin
-    pinMode(5, OUTPUT); // GPIO5 = LCD BL
-    digitalWrite(5, HIGH);
 
-    // Reset pin
-    pinMode(0, OUTPUT); // GPIO0 = LCD RST (EIO0)
-    digitalWrite(0, HIGH);
-
-    // Touch controller init (FT6336 on I2C)
-    Wire.begin(9, 8); // SDA=9, SCL=8
-    delay(10);
-    /*   touch.begin(Wire, FT6X36_SLAVE_ADDRESS, 9, 8);
-      touch.interruptPolling(); */
 }
 
 /***************************************************************************************
@@ -31,10 +19,7 @@ void _setup_gpio() {
 ** Description:   second stage gpio setup (PWM backlight)
 ***************************************************************************************/
 void _post_setup_gpio() {
-    pinMode(TFT_BL, OUTPUT);     // Full brightness at startup
-    digitalWrite(TFT_BL, HIGH);  // Backlight pin on channel 0
-    ledcAttach(TFT_BL, 5000, 8); // 5kHz, 8-bit resolution
-    ledcWrite(TFT_BL, 255);
+   
 }
 
 /***************************************************************************************

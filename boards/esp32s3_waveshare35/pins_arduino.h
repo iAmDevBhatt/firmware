@@ -70,6 +70,9 @@
 #define LCD_QSPI_D2 3
 #define LCD_QSPI_D3 4
 
+#define I2C_SDA 21
+#define I2C_SCL 22
+
 #define ROTATION 0
 
 #define TFT_SWRST -1

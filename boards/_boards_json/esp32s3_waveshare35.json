@@ -43,6 +43,6 @@
     "require_upload_port": true,
     "speed": 921600
   },
-  "url": "https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-3.5",
+  "url": "https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-3.5B",
   "vendor": "Waveshare"
 }

@@ -1,6 +1,7 @@
 #include "core/main_menu.h"
 #include <globals.h>
 
+#include "TCA9554.h"
 #include "core/powerSave.h"
 #include "core/serial_commands/cli.h"
 #include "core/utils.h"
@@ -13,7 +14,6 @@
 #include <lvgl.h>
 #include <string>
 #include <vector>
-#include "TCA9554.h"
 
 io_expander ioExpander;
 BruceConfig bruceConfig;
@@ -56,6 +56,10 @@ lv_obj_t *helloLabel;
 
 #ifdef HAS_ENCODER_LED
 volatile int EncoderLedChange = 0;
+#endif
+
+#ifndef WAVESHARE_35B
+TCA9554 TCA(0x20);
 #endif
 
 TouchPoint touchPoint;
@@ -432,7 +436,7 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 **  Function: setup
 **  Where the devices are started and variables set
 *********************************************************************/
-#if defined(WAVESHARE_35B)
+#if !defined(WAVESHARE_35B)
 void setup() {
     Arduino_DataBus *bus =
         new Arduino_ESP32QSPI(LCD_QSPI_CS, LCD_QSPI_CLK, LCD_QSPI_D0, LCD_QSPI_D1, LCD_QSPI_D2, LCD_QSPI_D3);

@@ -79,6 +79,8 @@
 #define TFT_PASET -1
 #define TFT_RAMWR -1
 #define TFT_RAMRD -1
+#define TFT_INVON -1
+#define TFT_INVOFF -1
 // #define ROTATION 1
 // #define ROTATION 2
 // #define ROTATION 3

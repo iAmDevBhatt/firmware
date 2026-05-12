@@ -7,8 +7,8 @@
 #ifndef DEVICE_NAME
 #define DEVICE_NAME "Waveshare ESP32-S3 Touch LCD 3.5"
 #endif
-#define SDA 8   // Serial data
-#define SCL 5   // Serial clock
+#define SDA 8   // Serial data#
+#define SCL 7   // Serial clock#
 #define MISO -1 // Master In Slave Out (not used by ST7796)
 #define MOSI 4  // Master Out Slave In
 #define SS 12   // Chip select/Slave select
@@ -26,7 +26,7 @@
 #define TFT_CS SS    // Chip select control pin
 #define TFT_DC DC    // Data Command control pin
 #define TFT_RST RST  // Reset pin (could connect to RST pin)
-#define LCD_BL 6
+#define LCD_BL 6     // #
 #define GFX_BL LCD_BL
 #define TFT_BACKLIGHT_ON HIGH
 #define TFT_WIDTH 320
@@ -84,6 +84,11 @@
 #define TFT_RAMRD -1
 #define TFT_INVON -1
 #define TFT_INVOFF -1
+
+#define SDCARD_CS 43
+#define SDCARD_SCK 11
+#define SDCARD_MISO 9
+#define SDCARD_MOSI 10
 // #define ROTATION 1
 // #define ROTATION 2
 // #define ROTATION 3

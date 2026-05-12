@@ -1,0 +1,207 @@
+#include "waveshare_main.h"
+#include "FS.h"
+#include "SD_MMC.h"
+#include "TCA9554.h"
+#include "esp_lcd_touch_axs15231b.h"
+#include <Arduino.h>
+#include <Arduino_GFX_Library.h>
+#include <globals.h>
+#include <lvgl.h>
+
+TCA9554 TCA(0x20);
+Arduino_DataBus *bus;
+Arduino_GFX *g;
+Arduino_Canvas *gfx;
+lv_display_t *disp;
+lv_obj_t *top_label = NULL;
+SPIClass sdSPI(FSPI); // use FSPI bus on ESP32-S3
+/*********************************************************************
+ **  Function: begin_storage
+ **  Config LittleFS and SD storage
+ *********************************************************************/
+// --- LVGL / Display Init ---
+
+void int_storage() {
+    // Assign pins for 1-bit SDMMC mode
+    if (!SD_MMC.setPins(11 /*clk*/, 10 /* cmd*/, 9 /* d0*/)) {
+        Serial.println("Pin change failed!");
+        return;
+    }
+
+    // Mount the card
+    if (!SD_MMC.begin("/sdmmc", true, true, 20000)) {
+        esp_rom_printf("Card Mount Failed\n");
+        while (1) {};
+    }
+
+    uint8_t cardType = SD_MMC.cardType();
+    if (cardType == CARD_NONE) {
+        Serial.println("No SD card attached");
+        return;
+    }
+
+    Serial.print("SD Card Type: ");
+    if (cardType == CARD_MMC) Serial.println("MMC");
+    else if (cardType == CARD_SD) Serial.println("SDSC");
+    else if (cardType == CARD_SDHC) Serial.println("SDHC");
+    else Serial.println("UNKNOWN");
+
+    uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
+    Serial.printf("Card Size: %llu MB\n", cardSize);
+
+    // List root directory
+    File root = SD_MMC.open("/");
+    while (true) {
+        File file = root.openNextFile();
+        if (!file) break;
+        Serial.printf("%s (%u bytes)\n", file.name(), file.size());
+    }
+}
+/* void btn_event_cb(lv_event_t *e) {
+    lv_obj_t *btn = (lv_obj_t *)lv_event_get_target(e); // cast needed in v9
+
+    // Create or update a label above the button
+    lv_obj_t *top_label = lv_label_create(lv_scr_act());
+    lv_label_set_text(top_label, "Button Pressed!");
+    lv_obj_align_to(top_label, btn, LV_ALIGN_OUT_TOP_MID, 0, -10);
+} */
+
+void btn_event_cb(lv_event_t *e) {
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *btn = (lv_obj_t *)lv_event_get_target(e);
+
+    if (code == LV_EVENT_PRESSED) {
+        if (!top_label) {
+            top_label = lv_label_create(lv_scr_act());
+            lv_obj_align_to(top_label, btn, LV_ALIGN_OUT_TOP_MID, -20, -60);
+        }
+        lv_label_set_text(top_label, "I love you Sonal <3");
+        lv_obj_clear_flag(top_label, LV_OBJ_FLAG_HIDDEN);
+    } else if (code == LV_EVENT_RELEASED) {
+        if (top_label) { lv_obj_add_flag(top_label, LV_OBJ_FLAG_HIDDEN); }
+    }
+}
+
+/*Read the touchpad*/
+void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
+    touch_data_t touch_data;
+    bsp_touch_read();
+
+    if (bsp_touch_get_coordinates(&touch_data)) {
+        data->state = LV_INDEV_STATE_PRESSED;
+        /*Set the coordinates*/
+        data->point.x = touch_data.coords[0].x;
+        data->point.y = touch_data.coords[0].y;
+    } else {
+        data->state = LV_INDEV_STATE_RELEASED;
+    }
+}
+/* LVGL calls it when a rendered image needs to copied to the display*/
+void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
+    uint32_t w = lv_area_get_width(area);
+    uint32_t h = lv_area_get_height(area);
+
+    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)px_map, w, h);
+    Serial.println("flush called");
+
+    gfx->flush();
+    /*Call it to tell LVGL you are ready*/
+    // lv_disp_flush_ready(disp);
+    lv_display_flush_ready(disp);
+}
+uint32_t millis_cb(void) { return millis(); }
+
+// --- Touch Init ---
+void init_touch() {
+    TCA.pinMode1(2, INPUT); // Touch INT
+    bsp_touch_init(&Wire, -1, 0, 320, 480);
+    lv_indev_t *indev = lv_indev_create();
+    lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
+    lv_indev_set_read_cb(indev, my_touchpad_read);
+}
+
+void init_display_lvgl() {
+    bus =
+        new Arduino_ESP32QSPI(LCD_QSPI_CS, LCD_QSPI_CLK, LCD_QSPI_D0, LCD_QSPI_D1, LCD_QSPI_D2, LCD_QSPI_D3);
+    g = new Arduino_AXS15231B(bus, -1 /* RST */, 0 /* rotation */, false, 320, 480);
+    gfx = new Arduino_Canvas(320, 480, g, 0, 0, ROTATION);
+
+    TCA.begin();
+    TCA.pinMode1(1, OUTPUT); // LCD RST
+    TCA.write1(1, 0);
+    delay(10);
+    TCA.write1(1, 1);
+    delay(200);
+
+    if (!gfx->begin()) { Serial.println("gfx->begin() failed!"); }
+    gfx->fillScreen(RGB565_DARKGREEN);
+
+    pinMode(6, OUTPUT);
+    digitalWrite(6, HIGH);
+
+    // Init LVGL
+    lv_init();
+    lv_tick_set_cb(millis_cb);
+
+    // Allocate buffers
+    uint32_t buf_size = 320 * 20; // partial buffer
+    lv_color_t *buf1 =
+        (lv_color_t *)heap_caps_malloc(buf_size * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    lv_color_t *buf2 =
+        (lv_color_t *)heap_caps_malloc(buf_size * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+
+    if (!buf1 || !buf2) {
+        Serial.println("LVGL buffer alloc failed!");
+        while (1);
+    }
+
+    // Register display
+    disp = lv_display_create(320, 480);
+    lv_display_set_flush_cb(disp, my_disp_flush);
+    lv_display_set_buffers(disp, buf1, buf2, buf_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
+}
+
+void waveshare_setup() { Serial.println("My module setup called!"); }
+
+void waveshare_loop() { Serial.println("My module loop running..."); }
+
+void dosetup() {
+    Serial.setRxBufferSize(SAFE_STACK_BUFFER_SIZE / 4);
+    Serial.begin(115200);
+    delay(2000);
+
+    log_d("Total heap: %d", ESP.getHeapSize());
+    log_d("Free heap: %d", ESP.getFreeHeap());
+    if (psramInit()) log_d("PSRAM Started");
+    if (psramFound()) log_d("PSRAM Found");
+    else log_d("PSRAM Not Found");
+    log_d("Total PSRAM: %d", ESP.getPsramSize());
+    log_d("Free PSRAM: %d", ESP.getFreePsram());
+
+    Wire.begin(SDA, SCL);
+    int_storage();
+    init_display_lvgl();
+    init_touch();
+
+    // Create a simple label
+    lv_obj_t *label = lv_label_create(lv_scr_act());
+    lv_label_set_text(label, "Hello LVGL!");
+    lv_obj_set_style_bg_color(label, lv_color_hex(0xFF0000), 0);
+    lv_obj_center(label);
+
+    lv_obj_t *btn = lv_btn_create(lv_scr_act());
+    lv_obj_center(btn);
+    lv_obj_t *lbl = lv_label_create(btn);
+    lv_label_set_text(lbl, "Press me");
+
+    // Attach the callback
+    lv_obj_add_event_cb(btn, btn_event_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, btn_event_cb, LV_EVENT_RELEASED, NULL);
+    lv_obj_add_event_cb(btn, btn_event_cb, LV_EVENT_PRESSED, NULL);
+    Serial.println("Setup done");
+}
+
+void doloop() {
+    lv_timer_handler(); // let LVGL do its work
+    delay(5);
+}

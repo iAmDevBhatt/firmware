@@ -181,8 +181,7 @@ void show_boot_screen() {
     lv_obj_center(img);
     lv_img_set_angle(img, 900);
     // Stretch (zoom) to fill screen
-    lv_img_set_zoom(img, 382);  // 256 = 1x scale
-    lv_img_set_zoom(img, 1000); // >256 zooms in (e.g. 400 ≈ 1.56x)
+    lv_img_set_zoom(img, 700); // >256 zooms in (e.g. 400 ≈ 1.56x)
 
     // Start timer to switch to main screen after 10s
     // boot_timer = lv_timer_create(show_main_screen, 10000, NULL);

@@ -1,7 +1,6 @@
 #include "core/main_menu.h"
 #include <globals.h>
 
-
 #include "core/powerSave.h"
 #include "core/serial_commands/cli.h"
 #include "core/utils.h"
@@ -9,14 +8,10 @@
 #include "esp32-hal-psram.h"
 #include "esp_task_wdt.h"
 #include "esp_wifi.h"
+#include "waveshare_main.h"
 #include <functional>
 #include <string>
 #include <vector>
-
-
-
-#include "waveshare_main.h"
-
 io_expander ioExpander;
 BruceConfig bruceConfig;
 BruceConfigPins bruceConfigPins;
@@ -54,14 +49,8 @@ volatile bool SerialCmdPress = false;
 volatile int forceMenuOption = -1;
 volatile uint8_t menuOptionType = 0;
 String menuOptionLabel = "";
-
-
 #ifdef HAS_ENCODER_LED
 volatile int EncoderLedChange = 0;
-#endif
-
-#ifndef WAVESHARE_35B
-TCA9554 TCA(0x20);
 #endif
 
 TouchPoint touchPoint;
@@ -166,8 +155,8 @@ volatile int tftHeight = VECTOR_DISPLAY_DEFAULT_WIDTH;
 #include "modules/bjs_interpreter/interpreter.h" // for JavaScript interpreter
 #include "modules/others/audio.h"                // for playAudioFile
 #include "modules/rf/rf_utils.h"                 // for initCC1101once
+#include "waveshare_main.h"
 #include <Wire.h>
-
 
 /*********************************************************************
  **  Function: begin_storage
@@ -235,7 +224,6 @@ void begin_tft() {
 #endif
     resetTftDisplay();
     setBrightness(bruceConfig.bright, false);
-
     tft.begin();
     tft.fillScreen(0xFFFF);
 }
@@ -423,12 +411,11 @@ void startup_sound() {
 #endif
 }
 
-
-`
 /*********************************************************************
-**  Function: setup
-**  Where the devices are started and variables set
-*********************************************************************/
+ **  Function: setup
+ **  Where the devices are started and variables set
+ *********************************************************************/
+#if !defined(WAVESHARE_35B)
 void setup() {
     Serial.setRxBufferSize(
         SAFE_STACK_BUFFER_SIZE / 4
@@ -452,38 +439,12 @@ void setup() {
     bruceConfigPins.rotation = ROTATION;
     setup_gpio();
 #if defined(HAS_SCREEN)
-    Serial.printf("After has");
-    tft.begin();
-    pinMode(GFX_BL, OUTPUT);
-    digitalWrite(GFX_BL, HIGH); // turn backlight on
+    tft.init();
     tft.setRotation(bruceConfigPins.rotation);
     tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.setTextSize(3);
-    tft.setCursor(50, 50);
-    tft.print("Hi");
-    delay(2000);
     // bruceConfig is not read yet.. just to show something on screen due to long boot time
     tft.setTextColor(TFT_PURPLE, TFT_BLACK);
     tft.drawCentreString("Booting", tft.width() / 2, tft.height() / 2, 1);
-    lv_init();
-    // Register display driver (reuse your flush callback)
-    static lv_disp_draw_buf_t draw_buf;
-    static lv_color_t buf1[LV_HOR_RES_MAX * 40];
-    lv_disp_draw_buf_init(&draw_buf, buf1, NULL, LV_HOR_RES_MAX * 40);
-
-    static lv_disp_drv_t disp_drv;
-    lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = LV_HOR_RES_MAX;
-    disp_drv.ver_res = LV_VER_RES_MAX;
-    disp_drv.flush_cb = my_disp_flush; // you’ll need to define this flush callback
-    disp_drv.draw_buf = &draw_buf;
-    lv_disp_drv_register(&disp_drv);
-
-    // Create Hello World label
-    lv_obj_t *label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Hello World!");
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 #else
     tft.begin();
 #endif
@@ -510,11 +471,10 @@ void setup() {
 
     // Some GPIO Settings (such as CYD's brightness control must be set after tft and sdcard)
     _post_setup_gpio();
+    // end of post gpio begin
     // Some board interfaces initialize or reset the backlight in post-setup,
     // so re-apply the stored brightness after that stage completes.
     setBrightness(bruceConfig.bright, false);
-    // end of post gpio begin
-
     // #ifndef USE_TFT_eSPI_TOUCH
     // This task keeps running all the time, will never stop
     xTaskCreate(
@@ -525,9 +485,8 @@ void setup() {
         2,                             // Task priority (0 to 3), loopTask has priority 2.
         &xHandle                       // Task handle (not used)
     );
-// #endif
+    // #endif
 #if defined(HAS_SCREEN)
-    Serial.printf("After has 2");
     bruceConfig.openThemeFile(bruceConfig.themeFS(), bruceConfig.themePath, false);
     if (!bruceConfig.instantBoot) {
         boot_screen_anim();
@@ -553,16 +512,17 @@ void setup() {
         bruceConfig.setStartupApp("");
     }
 }
+#else
+void setup() { dosetup(); }
+#endif
 /**********************************************************************
  **  Function: loop
  **  Main loop
  **********************************************************************/
 #if defined(HAS_SCREEN)
 void loop() {
-    Serial.printf("After has 22");
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
     if (interpreter_state > 0) {
-        Serial.printf("After has 23");
         vTaskDelay(pdMS_TO_TICKS(10));
         interpreter_state = 2;
         Serial.println("Entering interpreter...");
@@ -577,17 +537,17 @@ void loop() {
     }
 #endif
     tft.fillScreen(bruceConfig.bgColor);
-    lv_timer_handler();
-    delay(5);
-    Serial.printf("Main menu");
+
     mainMenu.begin();
     delay(1);
 }
-
+#elif defined(WAVESHARE_35B)
 void loop() {
-    lv_timer_handler(); // keep LVGL alive
-    delay(5);
-
+    doloop();
+    delay(1);
+}
+#else
+void loop() {
     tft.setLogging();
     Serial.println(
         "\n"
@@ -608,3 +568,4 @@ void loop() {
     mainMenu.begin();
     vTaskDelay(10 / portTICK_PERIOD_MS);
 }
+#endif

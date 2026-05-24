@@ -33,6 +33,20 @@ void ui_init(void)
     ui_BootScreen_screen_init();
     ui_WifiScreen_screen_init();
     ui_BluScreen_screen_init();
+    ui_Ethernet_screen_init();
+    ui_RadioFreq_screen_init();
+    ui_RFID_screen_init();
+    ui_InfraRed_screen_init();
+    ui_FMRadio_screen_init();
+    ui_Files_screen_init();
+    ui_GPS_screen_init();
+    ui_NRF24_screen_init();
+    ui_JSInterpreter_screen_init();
+    ui_LORA_screen_init();
+    ui_Others_screen_init();
+    ui_Clock_screen_init();
+    ui_Connect_screen_init();
+    ui_Config_screen_init();
     ui____initial_actions0 = lv_obj_create(NULL);
     lv_disp_load_scr(ui_BootScreen);
 }
@@ -42,4 +56,18 @@ void ui_destroy(void)
     ui_BootScreen_screen_destroy();
     ui_WifiScreen_screen_destroy();
     ui_BluScreen_screen_destroy();
+    ui_Ethernet_screen_destroy();
+    ui_RadioFreq_screen_destroy();
+    ui_RFID_screen_destroy();
+    ui_InfraRed_screen_destroy();
+    ui_FMRadio_screen_destroy();
+    ui_Files_screen_destroy();
+    ui_GPS_screen_destroy();
+    ui_NRF24_screen_destroy();
+    ui_JSInterpreter_screen_destroy();
+    ui_LORA_screen_destroy();
+    ui_Others_screen_destroy();
+    ui_Clock_screen_destroy();
+    ui_Connect_screen_destroy();
+    ui_Config_screen_destroy();
 }

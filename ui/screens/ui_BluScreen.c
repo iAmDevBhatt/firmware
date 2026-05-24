@@ -19,13 +19,13 @@ void ui_event_BluScreen(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
 
-    if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT) {
-        lv_indev_wait_release(lv_indev_active());
-        _ui_screen_change(&ui_BootScreen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, &ui_BootScreen_screen_init);
-    }
     if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_LEFT) {
         lv_indev_wait_release(lv_indev_active());
-        _ui_screen_change(&ui_WifiScreen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, &ui_WifiScreen_screen_init);
+        _ui_screen_change(&ui_Ethernet, LV_SCR_LOAD_ANIM_MOVE_TOP, 500, 0, &ui_Ethernet_screen_init);
+    }
+    if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT) {
+        lv_indev_wait_release(lv_indev_active());
+        _ui_screen_change(&ui_WifiScreen, LV_SCR_LOAD_ANIM_MOVE_TOP, 500, 0, &ui_WifiScreen_screen_init);
     }
 }
 

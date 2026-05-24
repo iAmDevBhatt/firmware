@@ -23,6 +23,20 @@ extern "C" {
 #include "screens/ui_BootScreen.h"
 #include "screens/ui_WifiScreen.h"
 #include "screens/ui_BluScreen.h"
+#include "screens/ui_Ethernet.h"
+#include "screens/ui_RadioFreq.h"
+#include "screens/ui_RFID.h"
+#include "screens/ui_InfraRed.h"
+#include "screens/ui_FMRadio.h"
+#include "screens/ui_Files.h"
+#include "screens/ui_GPS.h"
+#include "screens/ui_NRF24.h"
+#include "screens/ui_JSInterpreter.h"
+#include "screens/ui_LORA.h"
+#include "screens/ui_Others.h"
+#include "screens/ui_Clock.h"
+#include "screens/ui_Connect.h"
+#include "screens/ui_Config.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -36,6 +50,18 @@ LV_IMG_DECLARE(ui_img_bruce_hdc_png);    // assets/bruce_hdc.png
 LV_IMG_DECLARE(ui_img_battery_png);    // assets/battery.png
 LV_IMG_DECLARE(ui_img_wifi_png);    // assets/wifi.png
 LV_IMG_DECLARE(ui_img_blu_png);    // assets/blu.png
+LV_IMG_DECLARE(ui_img_ethernet_png);    // assets/Ethernet.png
+LV_IMG_DECLARE(ui_img_antenna_936483_png);    // assets/antenna_936483.png
+LV_IMG_DECLARE(ui_img_rfid_png);    // assets/RFID.png
+LV_IMG_DECLARE(ui_img_infrared_png);    // assets/Infrared.png
+LV_IMG_DECLARE(ui_img_fm_png);    // assets/FM.png
+LV_IMG_DECLARE(ui_img_files_png);    // assets/Files.png
+LV_IMG_DECLARE(ui_img_gps_png);    // assets/GPS.png
+LV_IMG_DECLARE(ui_img_lora_png);    // assets/LORA.png
+LV_IMG_DECLARE(ui_img_others_png);    // assets/Others.png
+LV_IMG_DECLARE(ui_img_clock_png);    // assets/Clock.png
+LV_IMG_DECLARE(ui_img_connect_png);    // assets/Connect.png
+LV_IMG_DECLARE(ui_img_config_png);    // assets/Config.png
 
 // FONTS
 LV_FONT_DECLARE(ui_font_UbuntuMedium);

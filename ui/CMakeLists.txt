@@ -1,6 +1,20 @@
 SET(SOURCES screens/ui_BootScreen.c
     screens/ui_WifiScreen.c
     screens/ui_BluScreen.c
+    screens/ui_Ethernet.c
+    screens/ui_RadioFreq.c
+    screens/ui_RFID.c
+    screens/ui_InfraRed.c
+    screens/ui_FMRadio.c
+    screens/ui_Files.c
+    screens/ui_GPS.c
+    screens/ui_NRF24.c
+    screens/ui_JSInterpreter.c
+    screens/ui_LORA.c
+    screens/ui_Others.c
+    screens/ui_Clock.c
+    screens/ui_Connect.c
+    screens/ui_Config.c
     ui_theme_manager.c
     ui_themes.c
     ui.c
@@ -10,6 +24,18 @@ SET(SOURCES screens/ui_BootScreen.c
     images/ui_img_battery_png.c
     images/ui_img_wifi_png.c
     images/ui_img_blu_png.c
+    images/ui_img_ethernet_png.c
+    images/ui_img_antenna_936483_png.c
+    images/ui_img_rfid_png.c
+    images/ui_img_infrared_png.c
+    images/ui_img_fm_png.c
+    images/ui_img_files_png.c
+    images/ui_img_gps_png.c
+    images/ui_img_lora_png.c
+    images/ui_img_others_png.c
+    images/ui_img_clock_png.c
+    images/ui_img_connect_png.c
+    images/ui_img_config_png.c
     fonts/ui_font_UbuntuMedium.c)
 
 add_library(ui ${SOURCES})

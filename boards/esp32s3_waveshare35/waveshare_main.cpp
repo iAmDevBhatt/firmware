@@ -4,7 +4,8 @@
 #include "TCA9554.h"
 #include "bruce_hd.c"
 #include "esp_lcd_touch_axs15231b.h"
-#include "ui_img_wifi_png.c"
+// #include "ui_img_wifi_png.c"
+#include "../../ui/ui.h"
 #include <Arduino.h>
 #include <Arduino_GFX_Library.h>
 #include <globals.h>
@@ -121,7 +122,7 @@ uint32_t millis_cb(void) { return millis(); }
 // --- Touch Init ---
 void init_touch() {
     TCA.pinMode1(2, INPUT); // Touch INT
-    bsp_touch_init(&Wire, -1, 0, 480, 320);
+    bsp_touch_init(&Wire, -1, 1, 480, 320);
     lv_indev_t *indev = lv_indev_create();
     lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(indev, my_touchpad_read);
@@ -131,7 +132,7 @@ void init_display_lvgl() {
     bus =
         new Arduino_ESP32QSPI(LCD_QSPI_CS, LCD_QSPI_CLK, LCD_QSPI_D0, LCD_QSPI_D1, LCD_QSPI_D2, LCD_QSPI_D3);
     g = new Arduino_AXS15231B(bus, -1 /* RST */, 0 /* rotation */, false, 320, 480);
-    gfx = new Arduino_Canvas(320, 480, g, 0, 0, 0);
+    gfx = new Arduino_Canvas(320, 480, g, 0, 0, 1);
 
     TCA.begin();
     TCA.pinMode1(1, OUTPUT); // LCD RST
@@ -168,7 +169,7 @@ void init_display_lvgl() {
     }
 
     // Register display
-    disp = lv_display_create(320, 480);
+    disp = lv_display_create(480, 320);
     lv_display_set_flush_cb(disp, my_disp_flush);
     lv_display_set_buffers(disp, buf1, buf2, buf_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
 }
@@ -185,7 +186,7 @@ void show_boot_screen() {
     lv_obj_t *img = lv_img_create(lv_scr_act());
     lv_img_set_src(img, &bruce_hd); // embedded splash image
     // lv_obj_center(img);
-    lv_obj_align(img, LV_ALIGN_TOP_LEFT, 0, 0);
+    lv_obj_align(img, LV_ALIGN_TOP_RIGHT, 0, 0);
     // lv_img_set_angle(img, 900);
     //  Stretch (zoom) to fill screen
     // Set pivot to image center
@@ -223,7 +224,9 @@ void dosetup() {
     int_storage();
     init_display_lvgl();
     init_touch();
-    show_boot_screen();
+    // show_boot_screen();
+    ui_init();
+
     Serial.println("Setup done");
 
     /* lv_obj_t *label = lv_label_create(lv_scr_act());

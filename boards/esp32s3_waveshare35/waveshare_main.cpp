@@ -157,7 +157,7 @@ void init_display_lvgl() {
     lv_tick_set_cb(millis_cb);
 
     // Allocate buffers
-    uint32_t buf_size = 480 * 20; // partial buffer
+    uint32_t buf_size = 480 * 320; // full buffer
     lv_color_t *buf1 =
         (lv_color_t *)heap_caps_malloc(buf_size * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     lv_color_t *buf2 =
@@ -171,7 +171,7 @@ void init_display_lvgl() {
     // Register display
     disp = lv_display_create(480, 320);
     lv_display_set_flush_cb(disp, my_disp_flush);
-    lv_display_set_buffers(disp, buf1, buf2, buf_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, buf1, buf2, buf_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_FULL);
 }
 
 void show_main_screen(lv_timer_t *t) {
